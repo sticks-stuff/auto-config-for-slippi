@@ -26,6 +26,7 @@ const slippiNintendontRootPath = app.isPackaged
 
 export default function setupIPC(mainWindow: BrowserWindow) {
   const store = new Store<{
+    codePath: string;
     config: Config;
     isoPath: string;
   }>();
@@ -54,6 +55,30 @@ export default function setupIPC(mainWindow: BrowserWindow) {
     store.set('isoPath', newIsoPath);
     isoPath = newIsoPath;
     return isoPath;
+  });
+
+  let codePath = store.get('codePath', '');
+  ipcMain.removeAllListeners('getCodePath');
+  ipcMain.handle('getCodePath', () => codePath);
+  ipcMain.removeAllListeners('chooseCodePath');
+  ipcMain.handle('chooseCodePath', async () => {
+    const openDialogRes = await dialog.showOpenDialog({
+      filters: [{ name: 'Gecko Code File', extensions: ['gct'] }],
+      properties: ['openFile', 'showHiddenFiles'],
+    });
+    if (openDialogRes.canceled) {
+      return codePath;
+    }
+    const [newCodePath] = openDialogRes.filePaths;
+    store.set('codePath', newCodePath);
+    codePath = newCodePath;
+    return codePath;
+  });
+  ipcMain.removeAllListeners('resetCodePath');
+  ipcMain.handle('resetCodePath', () => {
+    store.set('codePath', '');
+    codePath = '';
+    return codePath;
   });
 
   let config = store.get('config', DEFAULT_CONFIG);
@@ -216,7 +241,7 @@ export default function setupIPC(mainWindow: BrowserWindow) {
   ipcMain.handle(
     'writeConfig',
     async (event: IpcMainInvokeEvent, sdCard: SdCard) => {
-      await writeNincfg(sdCard, config);
+      await writeNincfg(sdCard, config, codePath);
     },
   );
 

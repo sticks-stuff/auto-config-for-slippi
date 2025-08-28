@@ -4,6 +4,9 @@ import { Config, SdCard } from '../common/types';
 const electronHandler = {
   getIsoPath: (): Promise<string> => ipcRenderer.invoke('getIsoPath'),
   chooseIsoPath: (): Promise<string> => ipcRenderer.invoke('chooseIsoPath'),
+  getCodePath: (): Promise<string> => ipcRenderer.invoke('getCodePath'),
+  chooseCodePath: (): Promise<string> => ipcRenderer.invoke('chooseCodePath'),
+  resetCodePath: (): Promise<string> => ipcRenderer.invoke('resetCodePath'),
   getConfig: (): Promise<Config> => ipcRenderer.invoke('getConfig'),
   setConfig: (config: Config): Promise<void> =>
     ipcRenderer.invoke('setConfig', config),

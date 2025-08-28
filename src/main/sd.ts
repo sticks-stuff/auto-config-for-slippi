@@ -131,7 +131,11 @@ export default async function getSdCards(): Promise<SdCard[]> {
   ) as SdCard[];
 }
 
-export async function writeNincfg(sdCard: SdCard, config: Config) {
+export async function writeNincfg(
+  sdCard: SdCard,
+  config: Config,
+  codePath: string,
+) {
   const buffer = Buffer.alloc(324);
 
   // magic
@@ -218,11 +222,16 @@ export async function writeNincfg(sdCard: SdCard, config: Config) {
 
     // copy in our codefile
     await mkdir(path.join(sdCard.key, 'codes'), { recursive: true });
-    await copyFile(
-      app.isPackaged
-        ? path.join(process.resourcesPath, 'assets', 'GALE01.gct')
-        : path.join(__dirname, '..', '..', 'assets', 'GALE01.gct'),
-      path.join(sdCard.key, 'codes', 'GALE01.gct'),
-    );
+    const dstPath = path.join(sdCard.key, 'codes', 'GALE01.gct');
+    if (codePath) {
+      await copyFile(codePath, dstPath);
+    } else {
+      await copyFile(
+        app.isPackaged
+          ? path.join(process.resourcesPath, 'assets', 'GALE01.gct')
+          : path.join(__dirname, '..', '..', 'assets', 'GALE01.gct'),
+        dstPath,
+      );
+    }
   }
 }
