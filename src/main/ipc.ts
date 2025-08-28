@@ -4,6 +4,7 @@ import {
   dialog,
   ipcMain,
   IpcMainInvokeEvent,
+  shell,
 } from 'electron';
 import Store from 'electron-store';
 import { createReadStream, createWriteStream, WriteStream } from 'fs';
@@ -248,4 +249,32 @@ export default function setupIPC(mainWindow: BrowserWindow) {
   ipcMain.handle('ejectSdCard', (event: IpcMainInvokeEvent, key: string) =>
     eject(key),
   );
+
+  ipcMain.removeAllListeners('getVersion');
+  ipcMain.handle('getVersion', app.getVersion);
+
+  ipcMain.removeAllListeners('getVersionLatest');
+  ipcMain.handle('getVersionLatest', async () => {
+    try {
+      const response = await fetch(
+        'https://api.github.com/repos/jmlee337/auto-config-for-slippi/releases/latest',
+      );
+      const json = await response.json();
+      const latestVersion = json.tag_name;
+      if (typeof latestVersion !== 'string') {
+        return '';
+      }
+      return latestVersion;
+    } catch {
+      return '';
+    }
+  });
+
+  ipcMain.removeAllListeners('update');
+  ipcMain.on('update', async () => {
+    await shell.openExternal(
+      'https://github.com/jmlee337/auto-config-for-slippi/releases/latest',
+    );
+    app.quit();
+  });
 }

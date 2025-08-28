@@ -12,6 +12,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import SdCards from './SdCards';
 import ConfigEl from './Config';
+import Version from './Version';
 
 export default function App() {
   const [errorMessage, setErrorMessage] = useState('');
@@ -57,6 +58,7 @@ export default function App() {
       </Stack>
       <ConfigEl />
       <SdCards openErrorMessage={openErrorMessage} />
+      <Version />
       <Dialog
         open={errorOpen}
         onClose={() => {

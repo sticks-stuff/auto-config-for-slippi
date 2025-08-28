@@ -23,6 +23,10 @@ const electronHandler = {
     ipcRenderer.invoke('writeConfig', sdCard),
   ejectSdCard: (key: string): Promise<void> =>
     ipcRenderer.invoke('ejectSdCard', key),
+  getVersion: (): Promise<string> => ipcRenderer.invoke('getVersion'),
+  getVersionLatest: (): Promise<string> =>
+    ipcRenderer.invoke('getVersionLatest'),
+  update: (): void => ipcRenderer.send('update'),
   onProgress: (
     callback: (
       event: IpcRendererEvent,
