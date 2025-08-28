@@ -8,12 +8,14 @@ const electronHandler = {
   setConfig: (config: Config): Promise<void> =>
     ipcRenderer.invoke('setConfig', config),
   getSdCards: (): Promise<SdCard[]> => ipcRenderer.invoke('getSdCards'),
+  getForwarderVersion: (): Promise<string> =>
+    ipcRenderer.invoke('getForwarderVersion'),
   getSlippiNintendontVersion: (): Promise<string> =>
     ipcRenderer.invoke('getSlippiNintendontVersion'),
   copyIso: (sdCard: SdCard): Promise<void> =>
     ipcRenderer.invoke('copyIso', sdCard),
-  copySlippiNintendont: (sdCard: SdCard): Promise<void> =>
-    ipcRenderer.invoke('copySlippiNintendont', sdCard),
+  copyApps: (sdCard: SdCard): Promise<void> =>
+    ipcRenderer.invoke('copyApps', sdCard),
   writeConfig: (sdCard: SdCard): Promise<void> =>
     ipcRenderer.invoke('writeConfig', sdCard),
   ejectSdCard: (key: string): Promise<void> =>

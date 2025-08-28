@@ -21,31 +21,51 @@ type RemovableDrive = {
   size: number;
 };
 
-const xmlParser = new XMLParser();
+const xmlParser = new XMLParser({ parseTagValue: false });
 
 async function getSdCard(
   removableDrive: RemovableDrive,
 ): Promise<SdCard | null> {
   let reason = '';
+  let forwarderVersion = '';
   let slippiNintendontVersion = '';
   let validIsoPath = '';
   if (!removableDrive.readonly) {
     try {
       await access(removableDrive.path, constants.R_OK | constants.W_OK);
 
-      const metaXmlPath = path.join(
+      const slippiNintendontMetaPath = path.join(
         removableDrive.path,
         'apps',
         'Slippi Nintendont',
         'meta.xml',
       );
       try {
-        const metaXmlBuffer = await readFile(metaXmlPath);
+        const metaXmlBuffer = await readFile(slippiNintendontMetaPath);
         const metaObj = xmlParser.parse(metaXmlBuffer);
         if (metaObj?.app?.name === 'Slippi Nintendont') {
           const version = metaObj.app.version;
           if (typeof version === 'string') {
             slippiNintendontVersion = version;
+          }
+        }
+      } catch {
+        // just catch
+      }
+
+      const forwarderMetaPath = path.join(
+        removableDrive.path,
+        'apps',
+        'slippi-nintendont-forwarder',
+        'meta.xml',
+      );
+      try {
+        const metaXmlBuffer = await readFile(forwarderMetaPath);
+        const metaObj = xmlParser.parse(metaXmlBuffer);
+        if (metaObj?.app?.name === 'Forwarder for Slippi Nintendont') {
+          const version = metaObj.app.version;
+          if (typeof version === 'string') {
+            forwarderVersion = version;
           }
         }
       } catch {
@@ -84,6 +104,7 @@ async function getSdCard(
   return {
     key: removableDrive.path,
     reason,
+    forwarderVersion,
     slippiNintendontVersion,
     validIsoPath,
   };

@@ -16,18 +16,20 @@ import { Eject, Refresh } from '@mui/icons-material';
 function SdCardContent({
   keyToPercent,
   sdCard,
+  forwarderVersion,
   slippiNintendontVersion,
   openErrorMessage,
   refresh,
 }: {
   keyToPercent: Map<string, number>;
   sdCard: SdCard;
+  forwarderVersion: string;
   slippiNintendontVersion: string;
   openErrorMessage: (message: string) => void;
   refresh: () => Promise<void>;
 }) {
   const [copyingIso, setCopyingIso] = useState(false);
-  const [copyingSlippiNintendont, setCopyingSlippiNintendont] = useState(false);
+  const [copyingApps, setCopyingApps] = useState(false);
   const [writing, setWriting] = useState(false);
   const [wrote, setWrote] = useState(false);
 
@@ -40,8 +42,15 @@ function SdCardContent({
         {sdCard.validIsoPath || 'No valid ISO'}
       </Typography>
       <Typography variant="caption" lineHeight="20px">
-        {sdCard.slippiNintendontVersion ? '✅' : '❌'} Slippi Nintendont
-        version: {sdCard.slippiNintendontVersion || 'No Slippi Nintendont'}
+        {sdCard.forwarderVersion === forwarderVersion ? '✅' : '❌'} Forwarder
+        version: {sdCard.forwarderVersion || 'No Forwarder'}
+      </Typography>
+      <Typography variant="caption" lineHeight="20px">
+        {sdCard.slippiNintendontVersion === slippiNintendontVersion
+          ? '✅'
+          : '❌'}{' '}
+        Slippi Nintendont version:{' '}
+        {sdCard.slippiNintendontVersion || 'No Slippi Nintendont'}
       </Typography>
       {copyingIso && (
         <LinearProgress
@@ -49,78 +58,76 @@ function SdCardContent({
           value={(keyToPercent.get(sdCard.key) ?? 0) * 100}
         />
       )}
-      <Stack direction="row" alignItems="center" gap="8px" marginTop="8px">
-        <Typography>Copy</Typography>
-        <Stack direction="row" flexGrow="1" justifyContent="end" gap="8px">
-          <Button
-            disabled={Boolean(sdCard.validIsoPath) || copyingIso}
-            variant="contained"
-            onClick={async () => {
-              setCopyingIso(true);
-              try {
-                await window.electron.copyIso(sdCard);
-                refresh();
-              } catch (e: unknown) {
-                openErrorMessage(
-                  e instanceof Error ? e.message : JSON.stringify(e ?? ''),
-                );
-              } finally {
-                setCopyingIso(false);
-              }
-            }}
-          >
-            {copyingIso ? 'Copying ISO...' : 'ISO'}
-          </Button>
-          <Button
-            disabled={
-              sdCard.slippiNintendontVersion === slippiNintendontVersion ||
-              copyingSlippiNintendont
+      <Stack direction="row" justifyContent="end" gap="8px" marginTop="8px">
+        <Button
+          disabled={Boolean(sdCard.validIsoPath) || copyingIso}
+          variant="contained"
+          onClick={async () => {
+            setCopyingIso(true);
+            try {
+              await window.electron.copyIso(sdCard);
+              refresh();
+            } catch (e: unknown) {
+              openErrorMessage(
+                e instanceof Error ? e.message : JSON.stringify(e ?? ''),
+              );
+            } finally {
+              setCopyingIso(false);
             }
-            variant="contained"
-            onClick={async () => {
-              setCopyingSlippiNintendont(true);
-              try {
-                await window.electron.copySlippiNintendont(sdCard);
-                refresh();
-              } catch (e: unknown) {
-                openErrorMessage(
-                  e instanceof Error ? e.message : JSON.stringify(e ?? ''),
-                );
-              } finally {
-                setCopyingSlippiNintendont(false);
-              }
-            }}
-          >
-            Slippi Nintendont
-          </Button>
-          <Button
-            disabled={
-              !sdCard.validIsoPath ||
-              !sdCard.slippiNintendontVersion ||
-              writing ||
-              wrote
+          }}
+        >
+          {copyingIso ? 'Copying ISO...' : 'Copy ISO'}
+        </Button>
+        <Button
+          disabled={
+            (sdCard.forwarderVersion === forwarderVersion &&
+              sdCard.slippiNintendontVersion === slippiNintendontVersion) ||
+            copyingApps
+          }
+          variant="contained"
+          onClick={async () => {
+            setCopyingApps(true);
+            try {
+              await window.electron.copyApps(sdCard);
+              refresh();
+            } catch (e: unknown) {
+              openErrorMessage(
+                e instanceof Error ? e.message : JSON.stringify(e ?? ''),
+              );
+            } finally {
+              setCopyingApps(false);
             }
-            variant="contained"
-            onClick={async () => {
-              setWriting(true);
-              try {
-                await window.electron.writeConfig(sdCard);
-                setWrote(true);
-                setTimeout(() => {
-                  setWrote(false);
-                }, 5000);
-              } catch (e: unknown) {
-                openErrorMessage(
-                  e instanceof Error ? e.message : JSON.stringify(e ?? ''),
-                );
-              } finally {
-                setWriting(false);
-              }
-            }}
-          >
-            {wrote ? 'Copied!' : 'Settings'}
-          </Button>
-        </Stack>
+          }}
+        >
+          Copy Apps
+        </Button>
+        <Button
+          disabled={
+            !sdCard.validIsoPath ||
+            !sdCard.slippiNintendontVersion ||
+            writing ||
+            wrote
+          }
+          variant="contained"
+          onClick={async () => {
+            setWriting(true);
+            try {
+              await window.electron.writeConfig(sdCard);
+              setWrote(true);
+              setTimeout(() => {
+                setWrote(false);
+              }, 5000);
+            } catch (e: unknown) {
+              openErrorMessage(
+                e instanceof Error ? e.message : JSON.stringify(e ?? ''),
+              );
+            } finally {
+              setWriting(false);
+            }
+          }}
+        >
+          {wrote ? 'Copied!' : 'Copy Config'}
+        </Button>
       </Stack>
     </>
   );
@@ -129,6 +136,7 @@ function SdCardContent({
 function SdCardEl({
   keyToPercent,
   sdCard,
+  forwarderVersion,
   slippiNintendontVersion,
   openErrorMessage,
   refresh,
@@ -136,6 +144,7 @@ function SdCardEl({
 }: {
   keyToPercent: Map<string, number>;
   sdCard: SdCard;
+  forwarderVersion: string;
   slippiNintendontVersion: string;
   openErrorMessage: (message: string) => void;
   refresh: () => Promise<void>;
@@ -179,6 +188,7 @@ function SdCardEl({
       <SdCardContent
         keyToPercent={keyToPercent}
         sdCard={sdCard}
+        forwarderVersion={forwarderVersion}
         slippiNintendontVersion={slippiNintendontVersion}
         openErrorMessage={openErrorMessage}
         refresh={refresh}
@@ -193,13 +203,16 @@ export default function SdCards({
   openErrorMessage: (message: string) => void;
 }) {
   const [sdCards, setSdCards] = useState<SdCard[]>([]);
+  const [forwarderVersion, setForwarderVersion] = useState('');
   const [slippiNintendontVersion, setSlippiNintendontVersion] = useState('');
   useEffect(() => {
     (async () => {
       const sdCardsPromise = window.electron.getSdCards();
+      const forwarderVersionPromise = window.electron.getForwarderVersion();
       const slippiNintendontVersionPromise =
         window.electron.getSlippiNintendontVersion();
       setSdCards(await sdCardsPromise);
+      setForwarderVersion(await forwarderVersionPromise);
       setSlippiNintendontVersion(await slippiNintendontVersionPromise);
     })();
   }, []);
@@ -279,6 +292,7 @@ export default function SdCards({
           <SdCardContent
             keyToPercent={keyToPercent}
             sdCard={sdCards[0]}
+            forwarderVersion={forwarderVersion}
             slippiNintendontVersion={slippiNintendontVersion}
             openErrorMessage={openErrorMessage}
             refresh={refresh}
@@ -290,6 +304,7 @@ export default function SdCards({
           key={sdCard.key}
           keyToPercent={keyToPercent}
           sdCard={sdCard}
+          forwarderVersion={forwarderVersion}
           slippiNintendontVersion={slippiNintendontVersion}
           openErrorMessage={openErrorMessage}
           refresh={refresh}

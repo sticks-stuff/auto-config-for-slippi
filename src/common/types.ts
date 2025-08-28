@@ -1,6 +1,7 @@
 export type SdCard = {
   key: string;
   reason: string;
+  forwarderVersion: string;
   slippiNintendontVersion: string;
   validIsoPath: string;
 };

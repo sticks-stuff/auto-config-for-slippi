@@ -17,6 +17,9 @@ import { copyFile, mkdir, readFile, stat } from 'fs/promises';
 import { XMLParser } from 'fast-xml-parser';
 
 const highWaterMark = 1024 * 1024;
+const forwarderRootPath = app.isPackaged
+  ? path.join(process.resourcesPath, 'assets', 'forwarder')
+  : path.join(__dirname, '..', '..', 'assets', 'forwarder');
 const slippiNintendontRootPath = app.isPackaged
   ? path.join(process.resourcesPath, 'assets', 'slippiNintendont')
   : path.join(__dirname, '..', '..', 'assets', 'slippiNintendont');
@@ -68,6 +71,32 @@ export default function setupIPC(mainWindow: BrowserWindow) {
   ipcMain.removeAllListeners('getSdCards');
   ipcMain.handle('getSdCards', getSdCards);
 
+  const xmlParser = new XMLParser({ parseTagValue: false });
+  let forwarderVersion = '';
+  ipcMain.removeAllListeners('getForwarderVersion');
+  ipcMain.handle('getForwarderVersion', async () => {
+    if (forwarderVersion) {
+      return forwarderVersion;
+    }
+
+    const metaXmlBuffer = await readFile(
+      path.join(forwarderRootPath, 'meta.xml'),
+    );
+    const metaObj = xmlParser.parse(metaXmlBuffer);
+    console.log(JSON.stringify(metaObj));
+    if (metaObj?.app?.name !== 'Forwarder for Slippi Nintendont') {
+      throw new Error('bundled meta.xml app name');
+    }
+
+    const version = metaObj.app.version;
+    if (typeof version !== 'string') {
+      throw new Error('bundled meta.xml app version');
+    }
+
+    forwarderVersion = version;
+    return version;
+  });
+
   let slippiNintendontVersion = '';
   ipcMain.removeAllListeners('getSlippiNintendontVersion');
   ipcMain.handle('getSlippiNintendontVersion', async () => {
@@ -78,7 +107,7 @@ export default function setupIPC(mainWindow: BrowserWindow) {
     const metaXmlBuffer = await readFile(
       path.join(slippiNintendontRootPath, 'meta.xml'),
     );
-    const metaObj = new XMLParser().parse(metaXmlBuffer);
+    const metaObj = xmlParser.parse(metaXmlBuffer);
     if (metaObj?.app?.name !== 'Slippi Nintendont') {
       throw new Error('bundled meta.xml app name');
     }
@@ -140,26 +169,46 @@ export default function setupIPC(mainWindow: BrowserWindow) {
     clearInterval(interval);
   });
 
-  ipcMain.removeAllListeners('copySlippiNintendont');
+  ipcMain.removeAllListeners('copyApps');
   ipcMain.handle(
-    'copySlippiNintendont',
+    'copyApps',
     async (event: IpcMainInvokeEvent, sdCard: SdCard) => {
-      const appsPath = path.join(sdCard.key, 'apps', 'Slippi Nintendont');
-      await mkdir(appsPath, { recursive: true });
-      await Promise.all([
-        copyFile(
-          path.join(slippiNintendontRootPath, 'boot.dol'),
-          path.join(appsPath, 'boot.dol'),
-        ),
-        copyFile(
-          path.join(slippiNintendontRootPath, 'icon.png'),
-          path.join(appsPath, 'icon.png'),
-        ),
-        copyFile(
-          path.join(slippiNintendontRootPath, 'meta.xml'),
-          path.join(appsPath, 'meta.xml'),
-        ),
-      ]);
+      if (sdCard.forwarderVersion !== forwarderVersion) {
+        const appPath = path.join(
+          sdCard.key,
+          'apps',
+          'slippi-nintendont-forwarder',
+        );
+        await mkdir(appPath, { recursive: true });
+        await Promise.all([
+          copyFile(
+            path.join(forwarderRootPath, 'boot.dol'),
+            path.join(appPath, 'boot.dol'),
+          ),
+          copyFile(
+            path.join(forwarderRootPath, 'meta.xml'),
+            path.join(appPath, 'meta.xml'),
+          ),
+        ]);
+      }
+      if (sdCard.slippiNintendontVersion !== slippiNintendontVersion) {
+        const appPath = path.join(sdCard.key, 'apps', 'Slippi Nintendont');
+        await mkdir(appPath, { recursive: true });
+        await Promise.all([
+          copyFile(
+            path.join(slippiNintendontRootPath, 'boot.dol'),
+            path.join(appPath, 'boot.dol'),
+          ),
+          copyFile(
+            path.join(slippiNintendontRootPath, 'icon.png'),
+            path.join(appPath, 'icon.png'),
+          ),
+          copyFile(
+            path.join(slippiNintendontRootPath, 'meta.xml'),
+            path.join(appPath, 'meta.xml'),
+          ),
+        ]);
+      }
     },
   );
 
