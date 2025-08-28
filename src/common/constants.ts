@@ -1,13 +1,6 @@
-import {
-  Config,
-  Frozen,
-  Gameplay,
-  Lag,
-  Mods,
-  UCF,
-  Widescreen,
-} from "../common/types";
+import { Config, Frozen, Gameplay, Lag, Mods, UCF, Widescreen } from './types';
 
+// eslint-disable-next-line import/prefer-default-export
 export const DEFAULT_CONFIG: Config = {
   cheats: false,
   forceProgressive: false,

@@ -1,4 +1,3 @@
-import os from 'os';
 import path from 'path';
 import { execFile } from 'child_process';
 import { app } from 'electron';

@@ -1,14 +1,5 @@
 import { ChangeEvent, useEffect, useState } from 'react';
 import {
-  Config,
-  Frozen,
-  Gameplay,
-  Lag,
-  Mods,
-  UCF,
-  Widescreen,
-} from '../common/types';
-import {
   Button,
   Collapse,
   FormControl,
@@ -25,9 +16,19 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { DEFAULT_CONFIG } from '../common/constants';
 import { Restore, TextSnippet } from '@mui/icons-material';
-export default function Config() {
+import {
+  Config,
+  Frozen,
+  Gameplay,
+  Lag,
+  Mods,
+  UCF,
+  Widescreen,
+} from '../common/types';
+import { DEFAULT_CONFIG } from '../common/constants';
+
+export default function ConfigEl() {
   const [codePath, setCodePath] = useState('');
   const [config, setConfig] = useState<Config>(DEFAULT_CONFIG);
 

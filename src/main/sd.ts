@@ -9,11 +9,11 @@ import {
   writeFile,
 } from 'fs/promises';
 import path from 'path';
-import { Config, SdCard } from '../common/types';
 import { XMLParser } from 'fast-xml-parser';
 import { list } from 'drivelist';
-import isValidISO from './iso';
 import { app } from 'electron';
+import isValidISO from './iso';
+import { Config, SdCard } from '../common/types';
 
 type RemovableDrive = {
   path: string;
@@ -44,7 +44,7 @@ async function getSdCard(
         const metaXmlBuffer = await readFile(slippiNintendontMetaPath);
         const metaObj = xmlParser.parse(metaXmlBuffer);
         if (metaObj?.app?.name === 'Slippi Nintendont') {
-          const version = metaObj.app.version;
+          const { version } = metaObj.app;
           if (typeof version === 'string') {
             slippiNintendontVersion = version;
           }
@@ -63,7 +63,7 @@ async function getSdCard(
         const metaXmlBuffer = await readFile(forwarderMetaPath);
         const metaObj = xmlParser.parse(metaXmlBuffer);
         if (metaObj?.app?.name === 'Forwarder for Slippi Nintendont') {
-          const version = metaObj.app.version;
+          const { version } = metaObj.app;
           if (typeof version === 'string') {
             forwarderVersion = version;
           }
@@ -82,9 +82,8 @@ async function getSdCard(
               .map(async (gamePath) => {
                 if (await isValidISO(path.join(gamesPath, gamePath))) {
                   return gamePath;
-                } else {
-                  return null;
                 }
+                return null;
               }),
           )
         ).filter((gamePath) => gamePath !== null) as string[];
@@ -169,12 +168,12 @@ export async function writeNincfg(
     const gamePathParts = gamePath.split(path.sep);
     gamePath = gamePathParts.join('/');
   }
-  gamePath = '/' + gamePath;
+  gamePath = `/${gamePath}`;
   const gamePathLength = gamePath.length;
   if (gamePathLength < 256) {
     const gamePathBuffer = Buffer.from(gamePath);
     gamePathBuffer.copy(buffer, 20);
-    for (let i = 20 + gamePathLength; i < 276; i++) {
+    for (let i = 20 + gamePathLength; i < 276; i += 1) {
       buffer.writeUint8(0, i);
     }
   }

@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import SdCards from './SdCards';
-import Config from './Config';
+import ConfigEl from './Config';
 
 export default function App() {
   const [errorMessage, setErrorMessage] = useState('');
@@ -55,7 +55,7 @@ export default function App() {
           </IconButton>
         </Tooltip>
       </Stack>
-      <Config />
+      <ConfigEl />
       <SdCards openErrorMessage={openErrorMessage} />
       <Dialog
         open={errorOpen}

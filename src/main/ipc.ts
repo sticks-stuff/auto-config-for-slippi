@@ -6,15 +6,15 @@ import {
   IpcMainInvokeEvent,
 } from 'electron';
 import Store from 'electron-store';
+import { createReadStream, createWriteStream, WriteStream } from 'fs';
+import path from 'path';
+import { copyFile, mkdir, readFile, stat } from 'fs/promises';
+import { XMLParser } from 'fast-xml-parser';
 import getSdCards, { writeNincfg } from './sd';
 import isValidISO from './iso';
 import eject from './eject';
 import { Config, SdCard } from '../common/types';
 import { DEFAULT_CONFIG } from '../common/constants';
-import path from 'path';
-import { createReadStream, createWriteStream, WriteStream } from 'fs';
-import { copyFile, mkdir, readFile, stat } from 'fs/promises';
-import { XMLParser } from 'fast-xml-parser';
 
 const highWaterMark = 1024 * 1024;
 const forwarderRootPath = app.isPackaged
@@ -108,12 +108,11 @@ export default function setupIPC(mainWindow: BrowserWindow) {
       path.join(forwarderRootPath, 'meta.xml'),
     );
     const metaObj = xmlParser.parse(metaXmlBuffer);
-    console.log(JSON.stringify(metaObj));
     if (metaObj?.app?.name !== 'Forwarder for Slippi Nintendont') {
       throw new Error('bundled meta.xml app name');
     }
 
-    const version = metaObj.app.version;
+    const { version } = metaObj.app;
     if (typeof version !== 'string') {
       throw new Error('bundled meta.xml app version');
     }
@@ -137,7 +136,7 @@ export default function setupIPC(mainWindow: BrowserWindow) {
       throw new Error('bundled meta.xml app name');
     }
 
-    const version = metaObj.app.version;
+    const { version } = metaObj.app;
     if (typeof version !== 'string') {
       throw new Error('bundled meta.xml app version');
     }

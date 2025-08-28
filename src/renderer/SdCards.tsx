@@ -10,8 +10,8 @@ import {
   Typography,
 } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
-import { SdCard } from '../common/types';
 import { Eject, Refresh } from '@mui/icons-material';
+import { SdCard } from '../common/types';
 
 function SdCardContent({
   keyToPercent,
