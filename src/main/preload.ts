@@ -1,29 +1,33 @@
-// Disable no-unused-vars, broken for spread args
-/* eslint no-unused-vars: off */
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
-
-export type Channels = 'ipc-example';
+import { Config, SdCard } from '../common/types';
 
 const electronHandler = {
-  ipcRenderer: {
-    sendMessage(channel: Channels, ...args: unknown[]) {
-      ipcRenderer.send(channel, ...args);
-    },
-    on(channel: Channels, func: (...args: unknown[]) => void) {
-      const subscription = (_event: IpcRendererEvent, ...args: unknown[]) =>
-        func(...args);
-      ipcRenderer.on(channel, subscription);
-
-      return () => {
-        ipcRenderer.removeListener(channel, subscription);
-      };
-    },
-    once(channel: Channels, func: (...args: unknown[]) => void) {
-      ipcRenderer.once(channel, (_event, ...args) => func(...args));
-    },
+  getIsoPath: (): Promise<string> => ipcRenderer.invoke('getIsoPath'),
+  chooseIsoPath: (): Promise<string> => ipcRenderer.invoke('chooseIsoPath'),
+  getConfig: (): Promise<Config> => ipcRenderer.invoke('getConfig'),
+  setConfig: (config: Config): Promise<void> =>
+    ipcRenderer.invoke('setConfig', config),
+  getSdCards: (): Promise<SdCard[]> => ipcRenderer.invoke('getSdCards'),
+  getSlippiNintendontVersion: (): Promise<string> =>
+    ipcRenderer.invoke('getSlippiNintendontVersion'),
+  copyIso: (sdCard: SdCard): Promise<void> =>
+    ipcRenderer.invoke('copyIso', sdCard),
+  copySlippiNintendont: (sdCard: SdCard): Promise<void> =>
+    ipcRenderer.invoke('copySlippiNintendont', sdCard),
+  writeConfig: (sdCard: SdCard): Promise<void> =>
+    ipcRenderer.invoke('writeConfig', sdCard),
+  ejectSdCard: (key: string): Promise<void> =>
+    ipcRenderer.invoke('ejectSdCard', key),
+  onProgress: (
+    callback: (
+      event: IpcRendererEvent,
+      progress: { key: string; percent: number }[],
+    ) => void,
+  ) => {
+    ipcRenderer.removeAllListeners('progress');
+    ipcRenderer.on('progress', callback);
   },
 };
 
 contextBridge.exposeInMainWorld('electron', electronHandler);
-
 export type ElectronHandler = typeof electronHandler;

@@ -1,50 +1,73 @@
-import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
-import icon from '../../assets/icon.svg';
-import './App.css';
-
-function Hello() {
-  return (
-    <div>
-      <div className="Hello">
-        <img width="200" alt="icon" src={icon} />
-      </div>
-      <h1>electron-react-boilerplate</h1>
-      <div className="Hello">
-        <a
-          href="https://electron-react-boilerplate.js.org/"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="books">
-              📚
-            </span>
-            Read our docs
-          </button>
-        </a>
-        <a
-          href="https://github.com/sponsors/electron-react-boilerplate"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="folded hands">
-              🙏
-            </span>
-            Donate
-          </button>
-        </a>
-      </div>
-    </div>
-  );
-}
+import { Album } from '@mui/icons-material';
+import {
+  Dialog,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  InputBase,
+  Stack,
+  Tooltip,
+} from '@mui/material';
+import { useCallback, useEffect, useState } from 'react';
+import SdCards from './SdCards';
+import Config from './Config';
 
 export default function App() {
+  const [errorMessage, setErrorMessage] = useState('');
+  const [errorOpen, setErrorOpen] = useState(false);
+  const openErrorMessage = useCallback((message: string) => {
+    setErrorMessage(message);
+    setErrorOpen(true);
+  }, []);
+
+  const [isoPath, setIsoPath] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      const isoPathPromise = window.electron.getIsoPath();
+      setIsoPath(await isoPathPromise);
+    })();
+  }, []);
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Hello />} />
-      </Routes>
-    </Router>
+    <>
+      <Stack direction="row">
+        <InputBase
+          disabled
+          size="small"
+          value={isoPath || 'Set Melee ISO path...'}
+          style={{ flexGrow: 1 }}
+        />
+        <Tooltip arrow title="Set Melee ISO path">
+          <IconButton
+            onClick={async () => {
+              try {
+                setIsoPath(await window.electron.chooseIsoPath());
+              } catch (e: unknown) {
+                openErrorMessage(
+                  e instanceof Error ? e.message : JSON.stringify(e ?? ''),
+                );
+              }
+            }}
+          >
+            <Album />
+          </IconButton>
+        </Tooltip>
+      </Stack>
+      <Config />
+      <SdCards openErrorMessage={openErrorMessage} />
+      <Dialog
+        open={errorOpen}
+        onClose={() => {
+          setErrorOpen(false);
+        }}
+      >
+        <DialogTitle>Error!</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{errorMessage}</DialogContentText>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

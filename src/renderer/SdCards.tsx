@@ -1,0 +1,306 @@
+import {
+  Alert,
+  Button,
+  IconButton,
+  InputBase,
+  LinearProgress,
+  Paper,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { useCallback, useEffect, useState } from 'react';
+import { SdCard } from '../common/types';
+import { Eject, Refresh } from '@mui/icons-material';
+
+function SdCardContent({
+  keyToPercent,
+  sdCard,
+  slippiNintendontVersion,
+  openErrorMessage,
+  refresh,
+}: {
+  keyToPercent: Map<string, number>;
+  sdCard: SdCard;
+  slippiNintendontVersion: string;
+  openErrorMessage: (message: string) => void;
+  refresh: () => Promise<void>;
+}) {
+  const [copyingIso, setCopyingIso] = useState(false);
+  const [copyingSlippiNintendont, setCopyingSlippiNintendont] = useState(false);
+  const [writing, setWriting] = useState(false);
+  const [wrote, setWrote] = useState(false);
+
+  return sdCard.reason ? (
+    <Alert severity="warning">{sdCard.reason}</Alert>
+  ) : (
+    <>
+      <Typography variant="caption" lineHeight="20px">
+        {sdCard.validIsoPath ? '✅' : '❌'} Melee ISO:{' '}
+        {sdCard.validIsoPath || 'No valid ISO'}
+      </Typography>
+      <Typography variant="caption" lineHeight="20px">
+        {sdCard.slippiNintendontVersion ? '✅' : '❌'} Slippi Nintendont
+        version: {sdCard.slippiNintendontVersion || 'No Slippi Nintendont'}
+      </Typography>
+      {copyingIso && (
+        <LinearProgress
+          variant="determinate"
+          value={(keyToPercent.get(sdCard.key) ?? 0) * 100}
+        />
+      )}
+      <Stack direction="row" alignItems="center" gap="8px" marginTop="8px">
+        <Typography>Copy</Typography>
+        <Stack direction="row" flexGrow="1" justifyContent="end" gap="8px">
+          <Button
+            disabled={Boolean(sdCard.validIsoPath) || copyingIso}
+            variant="contained"
+            onClick={async () => {
+              setCopyingIso(true);
+              try {
+                await window.electron.copyIso(sdCard);
+                refresh();
+              } catch (e: unknown) {
+                openErrorMessage(
+                  e instanceof Error ? e.message : JSON.stringify(e ?? ''),
+                );
+              } finally {
+                setCopyingIso(false);
+              }
+            }}
+          >
+            {copyingIso ? 'Copying ISO...' : 'ISO'}
+          </Button>
+          <Button
+            disabled={
+              sdCard.slippiNintendontVersion === slippiNintendontVersion ||
+              copyingSlippiNintendont
+            }
+            variant="contained"
+            onClick={async () => {
+              setCopyingSlippiNintendont(true);
+              try {
+                await window.electron.copySlippiNintendont(sdCard);
+                refresh();
+              } catch (e: unknown) {
+                openErrorMessage(
+                  e instanceof Error ? e.message : JSON.stringify(e ?? ''),
+                );
+              } finally {
+                setCopyingSlippiNintendont(false);
+              }
+            }}
+          >
+            Slippi Nintendont
+          </Button>
+          <Button
+            disabled={
+              !sdCard.validIsoPath ||
+              !sdCard.slippiNintendontVersion ||
+              writing ||
+              wrote
+            }
+            variant="contained"
+            onClick={async () => {
+              setWriting(true);
+              try {
+                await window.electron.writeConfig(sdCard);
+                setWrote(true);
+                setTimeout(() => {
+                  setWrote(false);
+                }, 5000);
+              } catch (e: unknown) {
+                openErrorMessage(
+                  e instanceof Error ? e.message : JSON.stringify(e ?? ''),
+                );
+              } finally {
+                setWriting(false);
+              }
+            }}
+          >
+            {wrote ? 'Copied!' : 'Settings'}
+          </Button>
+        </Stack>
+      </Stack>
+    </>
+  );
+}
+
+function SdCardEl({
+  keyToPercent,
+  sdCard,
+  slippiNintendontVersion,
+  openErrorMessage,
+  refresh,
+  removeSdCard,
+}: {
+  keyToPercent: Map<string, number>;
+  sdCard: SdCard;
+  slippiNintendontVersion: string;
+  openErrorMessage: (message: string) => void;
+  refresh: () => Promise<void>;
+  removeSdCard: () => void;
+}) {
+  const [ejecting, setEjecting] = useState(false);
+
+  return (
+    <Paper
+      elevation={2}
+      style={{ display: 'flex', flexDirection: 'column', padding: '0 8px 8px' }}
+    >
+      <Stack direction="row">
+        <InputBase
+          disabled
+          size="small"
+          value={sdCard.key}
+          style={{ flexGrow: 1 }}
+        />
+        <Tooltip arrow title="Eject">
+          <IconButton
+            disabled={ejecting}
+            onClick={async () => {
+              setEjecting(true);
+              try {
+                await window.electron.ejectSdCard(sdCard.key);
+                removeSdCard();
+              } catch (e: unknown) {
+                openErrorMessage(
+                  e instanceof Error ? e.message : JSON.stringify(e ?? ''),
+                );
+              } finally {
+                setEjecting(false);
+              }
+            }}
+          >
+            <Eject />
+          </IconButton>
+        </Tooltip>
+      </Stack>
+      <SdCardContent
+        keyToPercent={keyToPercent}
+        sdCard={sdCard}
+        slippiNintendontVersion={slippiNintendontVersion}
+        openErrorMessage={openErrorMessage}
+        refresh={refresh}
+      />
+    </Paper>
+  );
+}
+
+export default function SdCards({
+  openErrorMessage,
+}: {
+  openErrorMessage: (message: string) => void;
+}) {
+  const [sdCards, setSdCards] = useState<SdCard[]>([]);
+  const [slippiNintendontVersion, setSlippiNintendontVersion] = useState('');
+  useEffect(() => {
+    (async () => {
+      const sdCardsPromise = window.electron.getSdCards();
+      const slippiNintendontVersionPromise =
+        window.electron.getSlippiNintendontVersion();
+      setSdCards(await sdCardsPromise);
+      setSlippiNintendontVersion(await slippiNintendontVersionPromise);
+    })();
+  }, []);
+
+  const [keyToPercent, setKeyToPercent] = useState(new Map<string, number>());
+  useEffect(() => {
+    window.electron.onProgress((event, progress) => {
+      setKeyToPercent(
+        new Map(progress.map(({ key, percent }) => [key, percent])),
+      );
+    });
+  }, []);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      setSdCards(await window.electron.getSdCards());
+    } catch (e: unknown) {
+      openErrorMessage(
+        e instanceof Error ? e.message : JSON.stringify(e ?? ''),
+      );
+    } finally {
+      setRefreshing(false);
+    }
+  }, [openErrorMessage]);
+
+  const [ejecting, setEjecting] = useState(false);
+
+  return (
+    <Stack margin="8px -8px" gap="8px">
+      <Paper
+        elevation={2}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '0 8px 8px',
+        }}
+      >
+        <Stack direction="row">
+          <InputBase
+            disabled
+            size="small"
+            value={sdCards.length > 0 ? sdCards[0].key : 'Insert SD Card...'}
+            style={{ flexGrow: 1 }}
+          />
+          {sdCards.length > 0 && (
+            <Tooltip arrow title="Eject">
+              <IconButton
+                disabled={ejecting}
+                onClick={async () => {
+                  setEjecting(true);
+                  try {
+                    await window.electron.ejectSdCard(sdCards[0].key);
+                    const newSdCards = sdCards.slice(1);
+                    setSdCards(newSdCards);
+                  } catch (e: unknown) {
+                    openErrorMessage(
+                      e instanceof Error ? e.message : JSON.stringify(e ?? ''),
+                    );
+                  } finally {
+                    setEjecting(false);
+                  }
+                }}
+              >
+                <Eject />
+              </IconButton>
+            </Tooltip>
+          )}
+          <Tooltip arrow title="Refresh">
+            <IconButton disabled={refreshing} onClick={refresh}>
+              <Refresh />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+        {sdCards.length > 0 && (
+          <SdCardContent
+            keyToPercent={keyToPercent}
+            sdCard={sdCards[0]}
+            slippiNintendontVersion={slippiNintendontVersion}
+            openErrorMessage={openErrorMessage}
+            refresh={refresh}
+          />
+        )}
+      </Paper>
+      {sdCards.slice(1).map((sdCard) => (
+        <SdCardEl
+          key={sdCard.key}
+          keyToPercent={keyToPercent}
+          sdCard={sdCard}
+          slippiNintendontVersion={slippiNintendontVersion}
+          openErrorMessage={openErrorMessage}
+          refresh={refresh}
+          removeSdCard={() => {
+            const newSdCards = sdCards.filter(
+              (newSdCard) => newSdCard.key !== sdCard.key,
+            );
+            setSdCards(newSdCards);
+          }}
+        />
+      ))}
+    </Stack>
+  );
+}
