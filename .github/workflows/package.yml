@@ -1,0 +1,92 @@
+name: Package
+
+on: [push, pull_request]
+
+jobs:
+  macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js and NPM
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: npm install
+        run: |
+          npm install
+
+      - name: package
+        run: |
+          npm run lint
+          npm exec tsc
+          npm run package
+
+      - name: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: |
+            release/build/AutoConfigForSlippi*.dmg
+  ubuntu:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js and NPM
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: npm install
+        run: |
+          npm install
+
+      - name: package
+        run: |
+          npm run lint
+          npm exec tsc
+          npm run package
+
+      - name: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu
+          path: |
+            release/build/AutoConfigForSlippi*.AppImage
+  windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js and NPM
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: npm install
+        run: |
+          npm install
+
+      - name: package
+        run: |
+          npm run lint
+          npm exec tsc
+          npm run package
+
+      - name: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            release/build/AutoConfigForSlippi*.exe
