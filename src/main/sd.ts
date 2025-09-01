@@ -112,7 +112,11 @@ async function getSdCard(
 export default async function getSdCards(): Promise<SdCard[]> {
   const removableDriveList: RemovableDrive[] = (await list())
     .filter(
-      (drive) => drive.isRemovable && drive.size !== null && !drive.isVirtual,
+      (drive) =>
+        !drive.error &&
+        drive.isRemovable &&
+        drive.size !== null &&
+        !drive.isVirtual,
     )
     .map(
       (drive): RemovableDrive => ({

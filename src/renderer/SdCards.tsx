@@ -38,19 +38,24 @@ function SdCardContent({
   ) : (
     <>
       <Typography variant="caption" lineHeight="20px">
-        {sdCard.validIsoPath ? '✅' : '❌'} Melee ISO:{' '}
-        {sdCard.validIsoPath || 'No valid ISO'}
+        {sdCard.validIsoPath ? '✅' : '❌'} Melee ISO
+        {sdCard.validIsoPath ? `: ${sdCard.validIsoPath}` : ' not found'}
       </Typography>
       <Typography variant="caption" lineHeight="20px">
         {sdCard.forwarderVersion === forwarderVersion ? '✅' : '❌'} Forwarder
-        version: {sdCard.forwarderVersion || 'No Forwarder'}
+        for Slippi Nintendont{' '}
+        {sdCard.forwarderVersion
+          ? `version: ${sdCard.forwarderVersion}`
+          : 'not found'}
       </Typography>
       <Typography variant="caption" lineHeight="20px">
         {sdCard.slippiNintendontVersion === slippiNintendontVersion
           ? '✅'
           : '❌'}{' '}
-        Slippi Nintendont version:{' '}
-        {sdCard.slippiNintendontVersion || 'No Slippi Nintendont'}
+        Slippi Nintendont{' '}
+        {sdCard.slippiNintendontVersion
+          ? `version: ${sdCard.slippiNintendontVersion}`
+          : 'not found'}
       </Typography>
       {copyingIso && (
         <LinearProgress
@@ -104,7 +109,7 @@ function SdCardContent({
         <Button
           disabled={
             !sdCard.validIsoPath ||
-            !sdCard.slippiNintendontVersion ||
+            sdCard.slippiNintendontVersion !== slippiNintendontVersion ||
             writing ||
             wrote
           }
