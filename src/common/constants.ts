@@ -14,4 +14,12 @@ export const DEFAULT_CONFIG: Config = {
   gameplay: Gameplay.OFF,
   widescreen: Widescreen.OFF,
   safety: true,
+
+  // FTP upload settings
+  ftp_enabled: false,
+  ftp_server: '',
+  ftp_port: 21,
+  ftp_username: '',
+  ftp_password: '',
+  ftp_directory: '',
 };

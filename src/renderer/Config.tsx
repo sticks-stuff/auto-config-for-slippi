@@ -81,6 +81,135 @@ export default function ConfigEl() {
           >
             <ListItem disablePadding>
               <FormControlLabel
+                label="Enable FTP Upload"
+                labelPlacement="start"
+                style={{
+                  alignItems: 'center',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  height: '40px',
+                  margin: 0,
+                  width: '100%',
+                }}
+                control={
+                  <Switch
+                    size="small"
+                    checked={!!config.ftp_enabled}
+                    onChange={async (ev: ChangeEvent<HTMLInputElement>) => {
+                      const newConfig: Config = {
+                        ...config,
+                        ftp_enabled: ev.target.checked,
+                      };
+                      await window.electron.setConfig(newConfig);
+                      setConfig(newConfig);
+                    }}
+                  />
+                }
+              />
+            </ListItem>
+            {config.ftp_enabled ? (
+              <>  
+                <ListItem disablePadding>
+                  <FormControl style={{ width: '100%' }}>
+                    <Typography>FTP Server</Typography>
+                    <InputBase
+                      size="small"
+                      value={config.ftp_server || ''}
+                      onChange={async (ev: ChangeEvent<HTMLInputElement>) => {
+                        const newConfig: Config = {
+                          ...config,
+                          ftp_server: ev.target.value,
+                        };
+                        await window.electron.setConfig(newConfig);
+                        setConfig(newConfig);
+                      }}
+                      placeholder="hostname or IP"
+                      fullWidth
+                    />
+                  </FormControl>
+                </ListItem>
+                <ListItem disablePadding>
+                  <FormControl style={{ width: '100%' }}>
+                    <Typography>FTP Port</Typography>
+                    <InputBase
+                      size="small"
+                      type="number"
+                      value={config.ftp_port || 21}
+                      onChange={async (ev: ChangeEvent<HTMLInputElement>) => {
+                        const newConfig: Config = {
+                          ...config,
+                          ftp_port: Number(ev.target.value),
+                        };
+                        await window.electron.setConfig(newConfig);
+                        setConfig(newConfig);
+                      }}
+                      placeholder="21"
+                      fullWidth
+                    />
+                  </FormControl>
+                </ListItem>
+                <ListItem disablePadding>
+                  <FormControl style={{ width: '100%' }}>
+                    <Typography>FTP Username</Typography>
+                    <InputBase
+                      size="small"
+                      value={config.ftp_username || ''}
+                      onChange={async (ev: ChangeEvent<HTMLInputElement>) => {
+                        const newConfig: Config = {
+                          ...config,
+                          ftp_username: ev.target.value,
+                        };
+                        await window.electron.setConfig(newConfig);
+                        setConfig(newConfig);
+                      }}
+                      placeholder="username"
+                      fullWidth
+                    />
+                  </FormControl>
+                </ListItem>
+                <ListItem disablePadding>
+                  <FormControl style={{ width: '100%' }}>
+                    <Typography>FTP Password</Typography>
+                    <InputBase
+                      size="small"
+                      type="password"
+                      value={config.ftp_password || ''}
+                      onChange={async (ev: ChangeEvent<HTMLInputElement>) => {
+                        const newConfig: Config = {
+                          ...config,
+                          ftp_password: ev.target.value,
+                        };
+                        await window.electron.setConfig(newConfig);
+                        setConfig(newConfig);
+                      }}
+                      placeholder="password"
+                      fullWidth
+                    />
+                  </FormControl>
+                </ListItem>
+                <ListItem disablePadding>
+                  <FormControl style={{ width: '100%' }}>
+                    <Typography>FTP Directory</Typography>
+                    <InputBase
+                      size="small"
+                      value={config.ftp_directory || ''}
+                      onChange={async (ev: ChangeEvent<HTMLInputElement>) => {
+                        const newConfig: Config = {
+                          ...config,
+                          ftp_directory: ev.target.value,
+                        };
+                        await window.electron.setConfig(newConfig);
+                        setConfig(newConfig);
+                      }}
+                      placeholder="/uploads"
+                      fullWidth
+                    />
+                  </FormControl>
+                </ListItem>
+              </>
+            ) : null}
+            <ListItem disablePadding>
+              <FormControlLabel
                 label="Replays"
                 labelPlacement="start"
                 style={{

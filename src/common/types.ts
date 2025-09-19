@@ -69,4 +69,11 @@ export type Config = {
   gameplay: Gameplay;
   widescreen: Widescreen;
   safety: boolean;
+
+  ftp_enabled?: boolean;
+  ftp_server?: string;
+  ftp_port?: number;
+  ftp_username?: string;
+  ftp_password?: string;
+  ftp_directory?: string;
 };

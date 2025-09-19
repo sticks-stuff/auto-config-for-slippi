@@ -43,7 +43,7 @@ async function getSdCard(
       try {
         const metaXmlBuffer = await readFile(slippiNintendontMetaPath);
         const metaObj = xmlParser.parse(metaXmlBuffer);
-        if (metaObj?.app?.name === 'Slippi Nintendont') {
+        if (metaObj?.app?.name === 'Slippi Nintendont FTP') {
           const { version } = metaObj.app;
           if (typeof version === 'string') {
             slippiNintendontVersion = version;
@@ -139,13 +139,13 @@ export async function writeNincfg(
   config: Config,
   codePath: string,
 ) {
-  const buffer = Buffer.alloc(324);
+  const buffer = Buffer.alloc(522);
 
   // magic
   buffer.writeUint32BE(0x01070cf6, 0);
 
   // config version
-  buffer.writeUint32BE(0x0000000d, 4);
+  buffer.writeUint32BE(0x0000000e, 4);
 
   // config bits
   let configUint = config.cheats ? 1 : 0;
@@ -212,6 +212,48 @@ export async function writeNincfg(
 
   // replay led
   buffer.writeUint32BE(0, 320);
+
+  // ftp_enabled (unsigned int, 4 bytes)
+  buffer.writeUInt32BE(config.ftp_enabled ? 1 : 0, 324);
+
+  // ftp_server (char[64], null-padded)
+  {
+    const str = (config.ftp_server ?? '').slice(0, 63);
+    buffer.write(str, 328, 'utf8');
+    for (let i = 328 + Buffer.byteLength(str, 'utf8'); i < 392; i++) {
+      buffer.writeUInt8(0, i);
+    }
+  }
+
+  // ftp_port (unsigned short, 2 bytes)
+  buffer.writeUInt16BE(config.ftp_port ?? 21, 392);
+
+  // ftp_username (char[32], null-padded)
+  {
+    const str = (config.ftp_username ?? '').slice(0, 31);
+    buffer.write(str, 394, 'utf8');
+    for (let i = 394 + Buffer.byteLength(str, 'utf8'); i < 426; i++) {
+      buffer.writeUInt8(0, i);
+    }
+  }
+
+  // ftp_password (char[32], null-padded)
+  {
+    const str = (config.ftp_password ?? '').slice(0, 31);
+    buffer.write(str, 426, 'utf8');
+    for (let i = 426 + Buffer.byteLength(str, 'utf8'); i < 458; i++) {
+      buffer.writeUInt8(0, i);
+    }
+  }
+
+  // ftp_directory (char[64], null-padded)
+  {
+    const str = (config.ftp_directory ?? '').slice(0, 63);
+    buffer.write(str, 458, 'utf8');
+    for (let i = 458 + Buffer.byteLength(str, 'utf8'); i < 522; i++) {
+      buffer.writeUInt8(0, i);
+    }
+  }
 
   await writeFile(path.join(sdCard.key, 'slippi_nincfg.bin'), buffer);
   if (config.cheats) {

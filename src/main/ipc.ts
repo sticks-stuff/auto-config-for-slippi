@@ -133,7 +133,7 @@ export default function setupIPC(mainWindow: BrowserWindow) {
       path.join(slippiNintendontRootPath, 'meta.xml'),
     );
     const metaObj = xmlParser.parse(metaXmlBuffer);
-    if (metaObj?.app?.name !== 'Slippi Nintendont') {
+    if (metaObj?.app?.name !== 'Slippi Nintendont FTP') {
       throw new Error('bundled meta.xml app name');
     }
 
