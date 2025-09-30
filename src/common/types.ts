@@ -61,6 +61,7 @@ export type Config = {
   forceProgressive: boolean;
   autoBoot: boolean;
   replays: boolean;
+  networking: boolean;
   ucf: UCF;
   pal: boolean;
   mods: Mods;

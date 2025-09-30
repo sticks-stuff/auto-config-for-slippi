@@ -158,6 +158,9 @@ export async function writeNincfg(
   if (config.replays) {
     configUint |= 1 << 14;
   }
+  if (config.networking) {
+    configUint |= 1 << 13;
+  }
   buffer.writeUint32BE(configUint, 8);
 
   // video mode

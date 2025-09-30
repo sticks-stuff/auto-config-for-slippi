@@ -6,6 +6,7 @@ export const DEFAULT_CONFIG: Config = {
   forceProgressive: false,
   autoBoot: true,
   replays: true,
+  networking: false,
   ucf: UCF.STEALTH84,
   pal: false,
   mods: Mods.STEALTH,

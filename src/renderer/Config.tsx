@@ -108,7 +108,7 @@ export default function ConfigEl() {
               />
             </ListItem>
             {config.ftp_enabled ? (
-              <>  
+              <>
                 <ListItem disablePadding>
                   <FormControl style={{ width: '100%' }}>
                     <Typography>FTP Server</Typography>
@@ -228,6 +228,34 @@ export default function ConfigEl() {
                       const newConfig: Config = {
                         ...config,
                         replays: ev.target.checked,
+                      };
+                      await window.electron.setConfig(newConfig);
+                      setConfig(newConfig);
+                    }}
+                  />
+                }
+              />
+            </ListItem>
+            <ListItem disablePadding>
+              <FormControlLabel
+                label="Networking"
+                labelPlacement="start"
+                style={{
+                  alignItems: 'center',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  height: '40px',
+                  margin: 0,
+                  width: '100%',
+                }}
+                control={
+                  <Switch
+                    size="small"
+                    checked={config.networking}
+                    onChange={async (ev: ChangeEvent<HTMLInputElement>) => {
+                      const newConfig: Config = {
+                        ...config,
+                        networking: ev.target.checked,
                       };
                       await window.electron.setConfig(newConfig);
                       setConfig(newConfig);
