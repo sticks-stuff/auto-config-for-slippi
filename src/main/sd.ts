@@ -23,6 +23,56 @@ type RemovableDrive = {
 
 const xmlParser = new XMLParser({ parseTagValue: false });
 
+/**
+ *  0x00: rtc_bias (u32, BE)
+ *  0x04: nickname[32]
+ *  0x24: ftp_enabled (u32, BE)
+ *  0x28: ftp_server[64]
+ *  0x68: ftp_port (u16, BE)
+ *  0x6A: ftp_username[32]
+ *  0x8A: ftp_password[32]
+ *  0xAA: ftp_directory[64]
+ */
+async function updateSlippiConsoleDat(sdCard: SdCard, config: Config) {
+  const filePath = path.join(sdCard.key, 'slippi_console.dat');
+  const TOTAL_SIZE = 234;
+  const OFFSETS = {
+    ftp_enabled: 0x24,
+    ftp_server: 0x28,
+    ftp_port: 0x68,
+    ftp_username: 0x6a,
+    ftp_password: 0x8a,
+    ftp_directory: 0xaa,
+  } as const;
+
+  let buf: Buffer;
+  try {
+    buf = await readFile(filePath);
+    if (buf.length < TOTAL_SIZE) {
+      const newBuf = Buffer.alloc(TOTAL_SIZE, 0);
+      buf.copy(newBuf, 0, 0, buf.length);
+      buf = newBuf;
+    }
+  } catch {
+    buf = Buffer.alloc(TOTAL_SIZE, 0);
+  }
+
+  function writePadded(str: string, offset: number, maxLen: number) {
+    const trimmed = (str || '').slice(0, maxLen - 1);
+    buf.fill(0, offset, offset + maxLen);
+    buf.write(trimmed, offset, 'utf8');
+  }
+
+  buf.writeUInt32BE(config.ftp_enabled ? 1 : 0, OFFSETS.ftp_enabled);
+  writePadded(config.ftp_server ?? '', OFFSETS.ftp_server, 64);
+  buf.writeUInt16BE(config.ftp_port ?? 21, OFFSETS.ftp_port);
+  writePadded(config.ftp_username ?? '', OFFSETS.ftp_username, 32);
+  writePadded(config.ftp_password ?? '', OFFSETS.ftp_password, 32);
+  writePadded(config.ftp_directory ?? '', OFFSETS.ftp_directory, 64);
+
+  await writeFile(filePath, buf);
+}
+
 async function getSdCard(
   removableDrive: RemovableDrive,
 ): Promise<SdCard | null> {
@@ -139,7 +189,7 @@ export async function writeNincfg(
   config: Config,
   codePath: string,
 ) {
-  const buffer = Buffer.alloc(522);
+  const buffer = Buffer.alloc(324);
 
   // magic
   buffer.writeUint32BE(0x01070cf6, 0);
@@ -215,50 +265,9 @@ export async function writeNincfg(
 
   // replay led
   buffer.writeUint32BE(0, 320);
-
-  // ftp_enabled (unsigned int, 4 bytes)
-  buffer.writeUInt32BE(config.ftp_enabled ? 1 : 0, 324);
-
-  // ftp_server (char[64], null-padded)
-  {
-    const str = (config.ftp_server ?? '').slice(0, 63);
-    buffer.write(str, 328, 'utf8');
-    for (let i = 328 + Buffer.byteLength(str, 'utf8'); i < 392; i++) {
-      buffer.writeUInt8(0, i);
-    }
-  }
-
-  // ftp_port (unsigned short, 2 bytes)
-  buffer.writeUInt16BE(config.ftp_port ?? 21, 392);
-
-  // ftp_username (char[32], null-padded)
-  {
-    const str = (config.ftp_username ?? '').slice(0, 31);
-    buffer.write(str, 394, 'utf8');
-    for (let i = 394 + Buffer.byteLength(str, 'utf8'); i < 426; i++) {
-      buffer.writeUInt8(0, i);
-    }
-  }
-
-  // ftp_password (char[32], null-padded)
-  {
-    const str = (config.ftp_password ?? '').slice(0, 31);
-    buffer.write(str, 426, 'utf8');
-    for (let i = 426 + Buffer.byteLength(str, 'utf8'); i < 458; i++) {
-      buffer.writeUInt8(0, i);
-    }
-  }
-
-  // ftp_directory (char[64], null-padded)
-  {
-    const str = (config.ftp_directory ?? '').slice(0, 63);
-    buffer.write(str, 458, 'utf8');
-    for (let i = 458 + Buffer.byteLength(str, 'utf8'); i < 522; i++) {
-      buffer.writeUInt8(0, i);
-    }
-  }
-
   await writeFile(path.join(sdCard.key, 'slippi_nincfg.bin'), buffer);
+
+  await updateSlippiConsoleDat(sdCard, config);
   if (config.cheats) {
     // remove any existing codes
     const isoDir = path.dirname(path.join(sdCard.key, sdCard.validIsoPath));
