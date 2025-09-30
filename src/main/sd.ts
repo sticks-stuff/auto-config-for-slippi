@@ -195,7 +195,7 @@ export async function writeNincfg(
   buffer.writeUint32BE(0x01070cf6, 0);
 
   // config version
-  buffer.writeUint32BE(0x0000000e, 4);
+  buffer.writeUint32BE(0x0000000d, 4);
 
   // config bits
   let configUint = config.cheats ? 1 : 0;
@@ -210,6 +210,9 @@ export async function writeNincfg(
   }
   if (config.networking) {
     configUint |= 1 << 13;
+  }
+  if (config.ftp_enabled) {
+    configUint |= 1 << 16;
   }
   buffer.writeUint32BE(configUint, 8);
 

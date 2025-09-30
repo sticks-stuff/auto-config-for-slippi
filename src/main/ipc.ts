@@ -257,7 +257,7 @@ export default function setupIPC(mainWindow: BrowserWindow) {
   ipcMain.handle('getVersionLatest', async () => {
     try {
       const response = await fetch(
-        'https://api.github.com/repos/jmlee337/auto-config-for-slippi/releases/latest',
+        'https://api.github.com/repos/sticks-stuff/auto-config-for-slippi/releases/latest',
       );
       const json = await response.json();
       const latestVersion = json.tag_name;
